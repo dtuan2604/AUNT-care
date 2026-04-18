@@ -1,0 +1,6 @@
+node_modules/
+*.gguf
+ai/models/chat.gguf
+ai/models/embeddings/Xenova/
+ai/models/embeddings/wasm/*
+!ai/models/embeddings/wasm/.gitkeep

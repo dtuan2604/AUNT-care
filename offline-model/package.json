@@ -1,0 +1,24 @@
+{
+  "name": "aunt-care-offline-rag",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "process:medical": "node --import tsx ai/rag/processMedicalData.ts",
+    "embed:chunks": "node --import tsx ai/rag/embedChunks.ts",
+    "test:conversation": "node --import tsx ai/testConversation.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
