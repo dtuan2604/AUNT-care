@@ -1,3 +1,5 @@
+import { NativeModules, Platform } from 'react-native';
+
 import {
   BUNDLED_MODEL_ASSET_NAME,
   generateLocalAssistantReply,
@@ -9,6 +11,10 @@ import {
 import { analyzeTriage, starterMessage } from '../src/models/appState';
 
 describe('localLlmRuntime', () => {
+  const getRuntimeInfoMock = NativeModules.BundledModelResolver
+    .getRuntimeInfo as jest.Mock;
+  const resolveBundledModelMock = NativeModules.BundledModelResolver
+    .resolveModel as jest.Mock;
   const routineMessages = [
     {
       id: 'assistant-1',
@@ -23,6 +29,11 @@ describe('localLlmRuntime', () => {
   ];
 
   beforeEach(async () => {
+    getRuntimeInfoMock.mockResolvedValue({
+      isSimulator: false,
+    });
+    getRuntimeInfoMock.mockClear();
+    resolveBundledModelMock.mockClear();
     await unloadLocalModel();
   });
 
@@ -53,7 +64,7 @@ describe('localLlmRuntime', () => {
     expect(progressValues.at(-1)).toBe(100);
     expect(snapshot.isLoaded).toBe(true);
     expect(snapshot.modelUri).toBe('file:///tmp/auntcare-medical.gguf');
-    expect(snapshot.modelLabel).toBe('Local GGUF model');
+    expect(snapshot.modelLabel).toBe('llama');
     expect(getLocalModelSnapshot().isLoaded).toBe(true);
 
     await unloadLocalModel();
@@ -70,8 +81,32 @@ describe('localLlmRuntime', () => {
     const snapshot = await loadBundledModelAsset(BUNDLED_MODEL_ASSET_NAME);
 
     expect(snapshot.isLoaded).toBe(true);
-    expect(snapshot.modelUri).toBe(BUNDLED_MODEL_ASSET_NAME);
-    expect(snapshot.modelLabel).toBe('llama');
+    if (Platform.OS === 'ios') {
+      expect(resolveBundledModelMock).toHaveBeenCalledWith(
+        BUNDLED_MODEL_ASSET_NAME,
+      );
+      expect(snapshot.modelUri).toBe(
+        `file:///bundle/${BUNDLED_MODEL_ASSET_NAME}`,
+      );
+      expect(snapshot.modelLabel).toBe('llama');
+    } else {
+      expect(snapshot.modelUri).toBe(BUNDLED_MODEL_ASSET_NAME);
+      expect(snapshot.modelLabel).toBe('llama');
+    }
+  });
+
+  test('rejects model loading on iOS simulator', async () => {
+    if (Platform.OS !== 'ios') {
+      return;
+    }
+
+    getRuntimeInfoMock.mockResolvedValue({
+      isSimulator: true,
+    });
+
+    await expect(
+      loadLocalModel('file:///tmp/auntcare-medical.gguf'),
+    ).rejects.toThrow('iOS Simulator');
   });
 
   test('streams and returns a local assistant reply', async () => {

@@ -1,5 +1,7 @@
 /* eslint-env jest */
 
+const { NativeModules } = require('react-native');
+
 jest.mock('llama.rn', () => require('llama.rn/jest/mock'));
 jest.mock('react-native-document-picker', () => {
   const isCancel = jest.fn(
@@ -118,3 +120,18 @@ jest.mock('react-native-nitro-modules', () => ({}));
 jest.mock('react-native-mmkv', () => ({
   createMMKV: jest.fn(config => mockCreateMMKV(config)),
 }));
+
+if (!NativeModules.BundledModelResolver) {
+  NativeModules.BundledModelResolver = {
+    getRuntimeInfo: jest.fn(async () => ({
+      isSimulator: false,
+    })),
+    resolveModel: jest.fn(async assetName => `file:///bundle/${assetName}`),
+  };
+} else {
+  NativeModules.BundledModelResolver.getRuntimeInfo =
+    NativeModules.BundledModelResolver.getRuntimeInfo ||
+    jest.fn(async () => ({
+      isSimulator: false,
+    }));
+}

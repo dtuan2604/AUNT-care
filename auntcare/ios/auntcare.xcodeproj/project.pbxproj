@@ -11,6 +11,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		4D7E129332453C542DFE6884 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		59D83C4A8F2B4D33B6A1F812 /* auntcare-default-model.gguf in Resources */ = {isa = PBXBuildFile; fileRef = 59D83C4A8F2B4D33B6A1F811 /* auntcare-default-model.gguf */; };
+		6A4F64871A4A6D890AF71B12 /* BundledModelResolver.m in Sources */ = {isa = PBXBuildFile; fileRef = 6A4F64861A4A6D890AF71B12 /* BundledModelResolver.m */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
@@ -23,7 +24,8 @@
 		3B4392A12AC88292D35C810B /* Pods-auntcare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-auntcare.debug.xcconfig"; path = "Target Support Files/Pods-auntcare/Pods-auntcare.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-auntcare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-auntcare.release.xcconfig"; path = "Target Support Files/Pods-auntcare/Pods-auntcare.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-auntcare.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-auntcare.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		59D83C4A8F2B4D33B6A1F811 /* auntcare-default-model.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "auntcare-default-model.gguf"; path = "../models/auntcare-default-model.gguf"; sourceTree = SOURCE_ROOT; };
+		59D83C4A8F2B4D33B6A1F811 /* auntcare-default-model.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "auntcare-default-model.gguf"; path = auntcare/auntcare-default-model.gguf; sourceTree = "<group>"; };
+		6A4F64861A4A6D890AF71B12 /* BundledModelResolver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BundledModelResolver.m; path = auntcare/BundledModelResolver.m; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = auntcare/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = auntcare/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -46,6 +48,7 @@
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				59D83C4A8F2B4D33B6A1F811 /* auntcare-default-model.gguf */,
+				6A4F64861A4A6D890AF71B12 /* BundledModelResolver.m */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -250,6 +253,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A4F64871A4A6D890AF71B12 /* BundledModelResolver.m in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

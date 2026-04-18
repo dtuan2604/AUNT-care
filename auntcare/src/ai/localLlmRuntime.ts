@@ -1,7 +1,6 @@
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import {
   initLlama,
-  loadLlamaModelInfo,
   releaseAllLlama,
 } from 'llama.rn';
 import type { LlamaContext } from 'llama.rn';
@@ -28,6 +27,13 @@ let activeModelUri = '';
 let activeModelLabel = '';
 let activeGpuEnabled = false;
 let activeModelIsAsset = false;
+
+type BundledModelResolverModule = {
+  resolveModel(assetName: string): Promise<string>;
+  getRuntimeInfo(): Promise<{
+    isSimulator: boolean;
+  }>;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -81,6 +87,42 @@ function deriveModelLabel(modelInfo: unknown, fallbackLabel = 'Local GGUF model'
   return preferredName ?? architecture ?? fallbackLabel;
 }
 
+function getBundledModelResolver() {
+  return NativeModules.BundledModelResolver as
+    | BundledModelResolverModule
+    | undefined;
+}
+
+async function resolveBundledModelUri(assetName: string) {
+  const bundledModelResolver = getBundledModelResolver();
+  if (!bundledModelResolver?.resolveModel) {
+    throw new Error(
+      'The iOS bundled model resolver is unavailable in this build. Rebuild the app.',
+    );
+  }
+
+  const resolvedModelUri = await bundledModelResolver.resolveModel(assetName);
+  return normalizeModelUri(resolvedModelUri);
+}
+
+async function assertIosLocalRuntimeSupported() {
+  if (Platform.OS !== 'ios') {
+    return;
+  }
+
+  const bundledModelResolver = getBundledModelResolver();
+  if (!bundledModelResolver?.getRuntimeInfo) {
+    return;
+  }
+
+  const runtimeInfo = await bundledModelResolver.getRuntimeInfo();
+  if (runtimeInfo.isSimulator) {
+    throw new Error(
+      'Local model loading is not supported in the iOS Simulator. Run AUNT Care on a physical iPhone or use Android for local model testing.',
+    );
+  }
+}
+
 function buildSystemPrompt(triage: TriageAssessment) {
   return [
     'You are AUNT Care, an offline health support assistant running entirely on-device.',
@@ -123,6 +165,8 @@ async function loadModel(
   isModelAsset: boolean,
   onProgress?: (progress: number) => void,
 ): Promise<LocalModelSnapshot> {
+  await assertIosLocalRuntimeSupported();
+
   const normalizedIdentifier = isModelAsset
     ? normalizeAssetModelName(modelIdentifier)
     : normalizeModelUri(modelIdentifier);
@@ -137,9 +181,6 @@ async function loadModel(
 
   await unloadLocalModel();
 
-  const modelInfo = isModelAsset
-    ? null
-    : await loadLlamaModelInfo(normalizedIdentifier);
   const context = await initLlama(
     {
       model: normalizedIdentifier,
@@ -159,7 +200,7 @@ async function loadModel(
   activeContext = context;
   activeModelUri = normalizedIdentifier;
   activeModelLabel = deriveModelLabel(
-    isModelAsset ? context.model : modelInfo,
+    context.model,
     isModelAsset ? normalizedIdentifier : 'Local GGUF model',
   );
   activeGpuEnabled = context.gpu;
@@ -179,6 +220,11 @@ export async function loadBundledModelAsset(
   assetName: string = BUNDLED_MODEL_ASSET_NAME,
   onProgress?: (progress: number) => void,
 ): Promise<LocalModelSnapshot> {
+  if (Platform.OS === 'ios') {
+    const resolvedModelUri = await resolveBundledModelUri(assetName);
+    return loadModel(resolvedModelUri, false, onProgress);
+  }
+
   return loadModel(assetName, true, onProgress);
 }
 

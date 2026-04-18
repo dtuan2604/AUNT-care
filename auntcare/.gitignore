@@ -69,6 +69,7 @@ yarn-error.log
 # Local bundled models
 /models/*.gguf
 /android/app/src/main/assets/*.gguf
+/ios/auntcare/*.gguf
 
 # Yarn
 .yarn/*
