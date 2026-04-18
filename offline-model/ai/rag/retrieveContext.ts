@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import {
   CHUNKS_PATH,
   EMBEDDINGS_PATH,
-  MIN_SIMILARITY,
   TOP_K,
 } from "../config.js";
 import type { MedicalChunk, RetrievedChunk, StoredEmbedding } from "../types.js";
@@ -79,7 +78,6 @@ export async function retrieveTopChunks(query: string, k = TOP_K): Promise<Retri
         ...chunk,
         similarity: cosineSimilarity(queryEmbedding, embedding),
       }))
-      .filter((chunk) => chunk.similarity >= MIN_SIMILARITY)
       .sort((left, right) => right.similarity - left.similarity)
       .slice(0, k);
   } catch (error: unknown) {

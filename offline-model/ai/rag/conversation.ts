@@ -25,17 +25,6 @@ const PARSE_FAILURE_FALLBACK: ConversationResponse = {
     "The local model response was not valid JSON, so a conservative fallback was returned.",
 };
 
-const NO_CONTEXT_FALLBACK: ConversationResponse = {
-  assistant_message:
-    "I don't have enough grounded WHO guidance for that yet. Please tell me your main symptom, how long it has been happening, and any warning signs you have noticed.",
-  follow_up_questions: [
-    "What is the main symptom or concern you want help with?",
-    "How long has it been happening, and have you noticed any warning signs like trouble breathing, severe pain, or heavy bleeding?",
-  ],
-  urgency: "medium",
-  reasoning: "Relevant WHO context was not found for the query.",
-};
-
 function trimHistory(history: ConversationMessage[]) {
   return history.slice(-MAX_HISTORY_MESSAGES);
 }
@@ -53,6 +42,10 @@ function formatHistory(history: ConversationMessage[]) {
 }
 
 function formatRetrievedChunks(chunks: RetrievedChunk[]) {
+  if (chunks.length === 0) {
+    return "";
+  }
+
   const sections: string[] = [];
   let currentLength = 0;
 
@@ -81,22 +74,28 @@ function buildPrompt(
   history: ConversationMessage[],
   userInput: string,
 ) {
-  return `You are a conversational health information assistant using trusted WHO medical guidance.
+  return `You are a conversational health assistant focused on pre-screening and early guidance.
 
-Your job:
-- talk naturally and clearly
-- ask useful follow-up questions
-- answer only from the provided context
-- estimate whether the situation seems low, medium, or high urgency
-- if the symptoms sound serious, clearly tell the user to seek urgent medical care
-- do not invent facts outside the context
-- do not make certain diagnoses unless the context explicitly supports that wording
-- do not prescribe medication as a doctor would
-- you may mention general care or first-step guidance only if supported by the context
-- keep assistant_message in simple English, with a warm calm tone, concise but useful
-- return only valid JSON with no markdown fences or extra text
+Your behavior:
+- Speak naturally and calmly like a helpful assistant
+- Start conversations normally and greet the user when appropriate
+- Ask follow-up questions to understand symptoms better
+- When medical context is provided, use it to give grounded guidance
+- If no context is available, continue asking questions and guiding the user
+- Estimate urgency (low, medium, high) based on symptoms
+- If symptoms sound serious, clearly suggest seeking medical help
+- If the user says something vague like "hello" or "hi", respond conversationally and ask what is bothering them today
+- If retrieved context looks generic or not clearly related, do not force it into the answer
 
-Context:
+Constraints:
+- Do not make definitive diagnoses
+- Do not prescribe medications like a doctor
+- You may suggest general care steps if appropriate
+- Keep responses simple and human-like
+- Keep assistant_message concise, calm, and useful
+- Return only valid JSON with no markdown fences or extra text
+
+Context (may be empty):
 ${formatRetrievedChunks(retrievedChunks)}
 
 Conversation history:
@@ -110,7 +109,7 @@ Return ONLY valid JSON:
   "assistant_message": "...",
   "follow_up_questions": ["...", "..."],
   "urgency": "low" | "medium" | "high",
-  "reasoning": "brief grounded explanation based on the context"
+  "reasoning": "short explanation"
 }`;
 }
 
@@ -122,6 +121,12 @@ function extractJsonSubstring(rawOutput: string) {
   }
 
   return rawOutput.slice(firstBrace, lastBrace + 1);
+}
+
+function repairJsonString(rawJson: string) {
+  return rawJson
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/([}"\]])\s*("([A-Za-z_][A-Za-z0-9_]*)"\s*:)/g, "$1,\n$2");
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -166,7 +171,8 @@ function validateConversationResponse(value: unknown): ConversationResponse | nu
 }
 
 function parseResponseJson(rawOutput: string) {
-  const attempts = [rawOutput, extractJsonSubstring(rawOutput)].filter(
+  const extracted = extractJsonSubstring(rawOutput);
+  const attempts = [rawOutput, extracted, extracted ? repairJsonString(extracted) : null].filter(
     (value): value is string => Boolean(value),
   );
 
@@ -196,14 +202,6 @@ export async function runConversationTurnDetailed(
   input: ConversationTurnInput,
 ): Promise<ConversationTurnResult> {
   const retrievedChunks = await retrieveTopChunks(input.userInput);
-
-  if (retrievedChunks.length === 0) {
-    return {
-      response: NO_CONTEXT_FALLBACK,
-      retrievedChunks: [],
-      rawModelOutput: null,
-    };
-  }
 
   const prompt = buildPrompt(retrievedChunks, input.history, input.userInput);
 

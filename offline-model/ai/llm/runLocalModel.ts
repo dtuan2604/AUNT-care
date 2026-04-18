@@ -27,6 +27,12 @@ function buildArgs(prompt: string) {
   return [
     "-m",
     GGUF_MODEL_PATH,
+    "--device",
+    "none",
+    "-ngl",
+    "0",
+    "--simple-io",
+    "--no-display-prompt",
     "-p",
     prompt,
     "-n",
@@ -34,7 +40,7 @@ function buildArgs(prompt: string) {
     "-c",
     "4096",
     "--temp",
-    "0.2",
+    "0.3",
     "--top-p",
     "0.9",
     "--seed",
@@ -42,13 +48,10 @@ function buildArgs(prompt: string) {
   ];
 }
 
-async function runPrompt(
-  prompt: string,
-  onToken?: (token: string) => void,
-) {
+async function runPrompt(prompt: string): Promise<string> {
   await ensureLocalLlmAssets();
 
-  return new Promise<string>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const child = spawn(LLAMA_CPP_BIN, buildArgs(prompt), {
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -61,13 +64,12 @@ async function runPrompt(
         reject(new LocalLlmError(LOCAL_LLM_BINARY_MISSING_MESSAGE));
         return;
       }
+
       reject(error);
     });
 
     child.stdout.on("data", (chunk: Buffer) => {
-      const text = chunk.toString("utf8");
-      stdout += text;
-      onToken?.(text);
+      stdout += chunk.toString("utf8");
     });
 
     child.stderr.on("data", (chunk: Buffer) => {
@@ -93,9 +95,20 @@ export async function generateResponse(prompt: string) {
   return runPrompt(prompt);
 }
 
+// Optional: fake streaming (for UI compatibility)
 export async function streamResponse(
   prompt: string,
   onToken?: (token: string) => void,
 ) {
-  return runPrompt(prompt, onToken);
+  const full = await runPrompt(prompt);
+
+  if (onToken) {
+    const tokens = full.split(" ");
+    for (const t of tokens) {
+      onToken(t + " ");
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
+
+  return full;
 }

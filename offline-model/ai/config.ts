@@ -43,11 +43,10 @@ export const EMBEDDING_WASM_DIR = resolveFromRepo(
 export const GGUF_MODEL_PATH = resolveFromRepo(
   process.env.GGUF_MODEL_PATH ?? "ai/models/chat.gguf",
 );
-export const LLAMA_CPP_BIN = process.env.LLAMA_CPP_BIN ?? "llama-cli";
+export const LLAMA_CPP_BIN = process.env.LLAMA_CPP_BIN ?? "llama-completion";
 
 export const DEFAULT_WHO_TITLE = "WHO Self-care interventions guideline";
-export const TOP_K = getNumberEnv("TOP_K", 4);
-export const MIN_SIMILARITY = getNumberEnv("MIN_SIMILARITY", 0.2);
+export const TOP_K = getNumberEnv("TOP_K", 3);
 export const MAX_CONTEXT_CHARS = getNumberEnv("MAX_CONTEXT_CHARS", 10000);
 export const MAX_OUTPUT_TOKENS = getNumberEnv("MAX_OUTPUT_TOKENS", 350);
 export const MAX_HISTORY_MESSAGES = getNumberEnv("MAX_HISTORY_MESSAGES", 12);
@@ -66,4 +65,4 @@ export const EMBEDDING_WASM_MISSING_MESSAGE =
 export const LOCAL_LLM_MISSING_MESSAGE =
   "Local GGUF model not found. Please place your chat model at ai/models/chat.gguf or set GGUF_MODEL_PATH.";
 export const LOCAL_LLM_BINARY_MISSING_MESSAGE =
-  "llama-cli not found. Please install llama.cpp and ensure LLAMA_CPP_BIN points to the local binary.";
+  "Local llama.cpp binary not found. Please install llama.cpp and ensure LLAMA_CPP_BIN points to the local binary.";
